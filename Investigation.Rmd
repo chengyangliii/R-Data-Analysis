@@ -1,0 +1,154 @@
+---
+title: "Investigating whether closer races lead to higher turnouts"
+author: "Chengyang Li"
+output: 
+  html_document:
+    code_folding: hide
+    toc: true
+    toc_float: true
+---
+
+
+# Description
+
+In trying to understand voting behaviour, it has been conjectured that closer races lead to higher turnouts. We investigate this conjecture with the 2018 Ottawa municipal election data.
+
+# The closer races lead to higher turnouts
+```{r, warning=FALSE, message=FALSE}
+# load libraries
+library(dplyr)
+library(readxl)
+library(janitor)
+library(ggplot2)
+library(knitr)
+library(ggrepel)
+library(stringr)
+library(tidyr)
+library(readr)
+
+# getting data of turnouts
+
+df <- read_excel("statementofvotescastoctober242018.xls", sheet = 1, skip=4) %>%
+  clean_names() %>% 
+  dplyr::select(-starts_with("x")) %>%
+  filter(!is.na(registered_voters)) %>%
+  filter( precinct != "City / Ville - Total") %>%
+  filter(!str_detect(precinct, '^Spc Adv')) %>%
+  filter(!str_detect(precinct, '^Adv')) %>%
+  mutate( ward = str_sub(precinct,1,2)) %>%
+  group_by(ward) %>%
+  summarize(
+    total_votes = sum(cards_cast),
+    total_voters = sum(registered_voters)
+  ) %>%
+  mutate( fraction_voted = total_votes/total_voters)
+  
+df <- df %>% select(ward, fraction_voted)
+
+# getting the data of voting difference between  winner and the 2nd winner
+
+theWin <- function(ward){
+  df2 <- read_excel("statementofvotescastoctober242018.xls", sheet=ward+2, skip = 3) %>%
+  clean_names() %>% 
+  select(-starts_with("x"), -precinct_7) %>%
+  filter(!is.na(times_cast)) %>%
+  rename(precinct = precinct_1) %>%
+  na.omit() 
+  
+  winner <- df2 %>% 
+    select(-times_cast, -undervotes, -overvotes, -total_votes) %>%
+    pivot_longer(-precinct, names_to = "candidate", values_to = "votes") %>%
+    group_by(candidate) %>%
+    summarize( total_votes = sum(votes)/2 ) %>%
+    arrange(desc(total_votes)) %>%
+    head(2) %>%
+    select(total_votes) 
+  inter <- (winner$total_votes[1] - winner$total_votes[2])
+
+  return(tibble( inter = inter ))
+}
+
+# adding str_pad of the wards to the turnouts
+dfwards <- tibble()
+for (ward in 1:23) {
+  ans <- theWin(ward)
+  ans <- ans %>% mutate( 
+    ward = str_pad(ward, width = 2, side='left', pad = '0') 
+  )
+  dfwards <- bind_rows(dfwards, ans)
+}
+
+# merge two dataframes
+df_full <- dfwards %>% left_join(df, by = c("ward" = "ward"))
+
+# make plot
+plot <- df_full %>%
+  ggplot(aes( x = inter, y = fraction_voted))+
+  geom_point()+
+  geom_smooth(method='lm', se=FALSE)+
+  labs(
+    x = 'Voting difference between 1st and 2nd in one ward',
+    y = 'Turnout',
+    title = 'The closer races lead to higher turnouts'
+  )
+
+plot
+
+```
+
+Another useful plot with label of the wards
+```{r, warning=FALSE, message=FALSE}
+plot_t <- df_full %>%
+  ggplot(aes( x = inter, y = fraction_voted, label = ward))+
+  geom_text_repel()+
+  geom_point()+
+  geom_smooth(method='lm', se=FALSE)+
+  labs(
+    x = 'Voting difference between 1st and 2nd in one ward',
+    y = 'Turnout',
+    title = 'The closer races lead to higher turnouts'
+  )
+
+plot_t
+```
+
+Another useful plot with relative size of turnouts
+```{r, warning=FALSE, message=FALSE}
+plot_s <- df_full %>%
+  ggplot(aes( x = inter, y = fraction_voted, size = fraction_voted))+
+  geom_point()+
+  geom_smooth(method='lm', se=FALSE)+
+  labs(
+    x = 'Voting difference between 1st and 2nd in one ward',
+    y = 'Turnout',
+    title = 'The closer races lead to higher turnouts'
+  )
+
+plot_s
+
+```
+
+
+In this investigation from 2018 Ottawa municipal election data, the closer races lead to higher turnouts among 23 wards. A majority of wards which have closer races (voting difference between 1st and 2nd are less than 2500) lead to higher turnouts (turnouts between 35% and 40%). The rest of wards have over 2500 voting difference and below 32.5% turnouts.
+
+
+# Comments
+
+ * It is worth noting that there are two wards (15 and 03) does not have close race but leading to high turnouts.
+ * The highest turnout almost leads the cloest race in one of 23 wards.
+ * It is ad-hoc that make definition of race as winner's votes minus 2nd winner's votes.
+ * No statistical tests were performed, hence any conclusions are merely speculation.
+ 
+# Suggestions for further explorations
+
+ * Perhaps there are more interesting details if we apply type of areas (urban, suburban and rural) to see exact relationship may differ by type of area.
+ * Would be interesting to further investigate two wards that have higher turnouts but no closer races.
+ 
+# References
+
+ * R for Data Science
+
+# Appendix: sessionInfo
+```{r}
+sessionInfo()
+```

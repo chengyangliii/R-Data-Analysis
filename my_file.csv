@@ -1,0 +1,24 @@
+number,Ward,Population,Households,first_letter,big
+1,Orleans,48789,18892,O,TRUE
+2,Innes,41211,15436,I,TRUE
+3,Barrhaven,58269,21259,B,TRUE
+4,Kanata North,36996,14490,K,FALSE
+5,West Carleton-March,25600,9071,W,FALSE
+6,Stittsville,32494,11195,S,FALSE
+7,Bay,45476,21099,B,TRUE
+8,College,52430,22147,C,TRUE
+9,Knoxdale-Merivale,39515,15948,K,TRUE
+10,Gloucester-Southgate,47233,18949,G,TRUE
+11,Beacon Hill-Cyrville,33416,13937,B,FALSE
+12,Rideau-Vanier,48536,27549,R,TRUE
+13,Rideau-Rockcliffe,38154,18670,R,TRUE
+14,Somerset,41569,25458,S,TRUE
+15,Kitchissippi,43258,20497,K,TRUE
+16,River,48512,21141,R,TRUE
+17,Capital,37440,17290,C,TRUE
+18,Alta Vista,44713,19975,A,TRUE
+19,Cumberland,46813,17556,C,TRUE
+20,Osgoode,27770,9736,O,FALSE
+21,Rideau-Goulbourn,27681,9807,R,FALSE
+22,Gloucester-South Nepean,49280,18039,G,TRUE
+23,Kanata South,48700,18238,K,TRUE
